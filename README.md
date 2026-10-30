@@ -1,2 +1,1 @@
-привет
 # Kanban-board
