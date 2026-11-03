@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Регистрация — Kanban</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-box">
+    <div class="logo">
+      <svg class="logo-mark" viewBox="0 0 44 44" aria-hidden="true">
+        <rect x="9" y="9" width="7" height="20" rx="2" fill="#fff" opacity="0.95"/>
+        <rect x="18.5" y="9" width="7" height="26" rx="2" fill="#fff" opacity="0.75"/>
+        <rect x="28" y="9" width="7" height="14" rx="2" fill="#fff" opacity="0.55"/>
+      </svg>
+      <span class="logo-text">Kanban</span>
+    </div>
+
+    <h1>Создать аккаунт</h1>
+    <p class="subtitle">Логин от 3 символов, пароль от 6</p>
+
+    <form id="auth-form" data-mode="register">
+      <label for="username">Логин</label>
+      <input id="username" name="username" type="text" placeholder="Придумайте логин" autocomplete="username" required minlength="3" maxlength="50">
+
+      <label for="password">Пароль</label>
+      <input id="password" name="password" type="password" placeholder="Придумайте пароль" autocomplete="new-password" required minlength="6" maxlength="72">
+
+      <p id="error" class="error" hidden></p>
+
+      <button class="btn" type="submit">Зарегистрироваться</button>
+    </form>
+
+    <p class="auth-link">Уже есть аккаунт? <a href="/login.html">Войти</a></p>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+</body>
+</html>
