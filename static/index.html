@@ -10,9 +10,9 @@
   <header class="topbar">
     <div class="logo">
       <svg class="logo-mark" viewBox="0 0 44 44" aria-hidden="true">
-        <rect x="9" y="9" width="7" height="20" rx="2" fill="#fff" opacity="0.95"/>
-        <rect x="18.5" y="9" width="7" height="26" rx="2" fill="#fff" opacity="0.75"/>
-        <rect x="28" y="9" width="7" height="14" rx="2" fill="#fff" opacity="0.55"/>
+        <rect x="9" y="9" width="7" height="20" rx="2"/>
+        <rect x="18.5" y="9" width="7" height="26" rx="2"/>
+        <rect x="28" y="9" width="7" height="14" rx="2"/>
       </svg>
       <span class="logo-text">Kanban</span>
     </div>
@@ -27,6 +27,7 @@
 
   <main class="layout">
     <aside class="sidebar">
+      <span class="eyebrow">Рабочая область</span>
       <h2>Проекты</h2>
 
       <form id="project-form" class="project-form">
@@ -40,9 +41,42 @@
 
     <section class="board-area">
       <div class="board-head">
-        <h2 id="board-title">Доска</h2>
-        <button class="btn" id="add-card" type="button" hidden>+ Карточка</button>
+        <div class="board-head-text">
+          <span class="eyebrow">Проект</span>
+          <h2 id="board-title">Доска</h2>
+          <p class="board-sub" id="board-sub"></p>
+        </div>
+        <div class="ring" id="ring" hidden>
+          <span class="ring-value" id="ring-value">0%</span>
+          <span class="ring-label">готово</span>
+        </div>
       </div>
+
+      <div id="board-tools" hidden>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="stat-total">0</span>
+            <span class="stat-label">Всего</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-progress">0</span>
+            <span class="stat-label">В процессе</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="stat-done">0</span>
+            <span class="stat-label">Готово</span>
+          </div>
+        </div>
+
+        <div class="section-head">
+          <div>
+            <span class="eyebrow">Доска задач</span>
+            <h3>Карточки</h3>
+          </div>
+          <button class="btn" id="add-card" type="button">+ Карточка</button>
+        </div>
+      </div>
+
       <p id="board-state" class="state"></p>
       <div id="board" class="board"></div>
     </section>
@@ -50,6 +84,7 @@
 
   <dialog id="card-dialog" class="dialog">
     <form id="card-form">
+      <span class="eyebrow">Карточка</span>
       <h3 id="dialog-title">Новая карточка</h3>
 
       <label for="card-title">Название</label>

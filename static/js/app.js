@@ -15,8 +15,11 @@ const projectsState = document.getElementById('projects-state');
 const projectForm = document.getElementById('project-form');
 const projectTitle = document.getElementById('project-title');
 const boardTitle = document.getElementById('board-title');
+const boardSub = document.getElementById('board-sub');
 const boardState = document.getElementById('board-state');
+const boardTools = document.getElementById('board-tools');
 const board = document.getElementById('board');
+const ring = document.getElementById('ring');
 const addCardButton = document.getElementById('add-card');
 const toast = document.getElementById('toast');
 
@@ -52,6 +55,10 @@ function handleError(err) {
 function formatDate(value) {
   const parts = value.split('-');
   return parts[2] + '.' + parts[1] + '.' + parts[0];
+}
+
+function pad(number) {
+  return String(number).padStart(2, '0');
 }
 
 /* ---------- Проекты ---------- */
@@ -151,9 +158,11 @@ function selectProject(id) {
 
 function showEmptyBoard() {
   boardTitle.textContent = 'Доска';
-  addCardButton.hidden = true;
+  boardSub.textContent = 'Выберите проект или создайте новый';
+  boardTools.hidden = true;
+  ring.hidden = true;
   board.replaceChildren();
-  boardState.textContent = 'Выберите проект или создайте новый.';
+  boardState.textContent = 'Здесь появятся карточки выбранного проекта.';
   boardState.hidden = false;
 }
 
@@ -161,7 +170,7 @@ async function loadCards() {
   const id = currentId;
   const project = projects.find((p) => p.id === id);
   boardTitle.textContent = project ? project.title : 'Доска';
-  addCardButton.hidden = false;
+  boardSub.textContent = 'Загрузка...';
 
   board.replaceChildren();
   boardState.textContent = 'Загрузка карточек...';
@@ -173,6 +182,7 @@ async function loadCards() {
   } catch (err) {
     if (id === currentId) {
       boardState.textContent = 'Не удалось загрузить карточки';
+      boardSub.textContent = '';
     }
     handleError(err);
     return;
@@ -183,10 +193,29 @@ async function loadCards() {
   }
   cards = loaded;
   boardState.hidden = true;
+  boardTools.hidden = false;
   renderBoard();
 }
 
+function renderStats() {
+  const total = cards.length;
+  const inProgress = cards.filter((c) => c.status === 'in_progress').length;
+  const done = cards.filter((c) => c.status === 'done').length;
+  const percent = total === 0 ? 0 : Math.round((done / total) * 100);
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-progress').textContent = inProgress;
+  document.getElementById('stat-done').textContent = done;
+  document.getElementById('ring-value').textContent = percent + '%';
+  ring.style.setProperty('--p', percent);
+  ring.hidden = false;
+
+  boardSub.textContent =
+    total === 0 ? 'Карточек пока нет' : done + ' из ' + total + ' карточек выполнено';
+}
+
 function renderBoard() {
+  renderStats();
   board.replaceChildren();
 
   COLUMNS.forEach((column, index) => {
@@ -203,7 +232,7 @@ function renderBoard() {
 
     const count = document.createElement('span');
     count.className = 'column-count';
-    count.textContent = columnCards.length;
+    count.textContent = pad(columnCards.length);
 
     head.append(title, count);
     box.append(head);
@@ -239,6 +268,20 @@ function buildCard(card, columnIndex) {
   const item = document.createElement('article');
   item.className = 'card-item';
 
+  const top = document.createElement('div');
+  top.className = 'card-top';
+
+  const number = document.createElement('span');
+  number.className = 'card-number';
+  number.textContent = 'Карточка ' + pad(cards.indexOf(card) + 1);
+
+  const priority = document.createElement('span');
+  priority.className = 'badge badge-p' + card.priority;
+  priority.textContent = PRIORITIES[card.priority] || 'Приоритет ' + card.priority;
+
+  top.append(number, priority);
+  item.append(top);
+
   const title = document.createElement('h4');
   title.textContent = card.title;
   item.append(title);
@@ -250,21 +293,12 @@ function buildCard(card, columnIndex) {
     item.append(description);
   }
 
-  const meta = document.createElement('div');
-  meta.className = 'card-meta';
-
-  const priority = document.createElement('span');
-  priority.className = 'badge badge-p' + card.priority;
-  priority.textContent = PRIORITIES[card.priority] || 'Приоритет ' + card.priority;
-  meta.append(priority);
-
   if (card.due_date) {
-    const due = document.createElement('span');
+    const due = document.createElement('p');
     due.className = 'card-due';
-    due.textContent = 'до ' + formatDate(card.due_date);
-    meta.append(due);
+    due.textContent = 'Срок · ' + formatDate(card.due_date);
+    item.append(due);
   }
-  item.append(meta);
 
   const actions = document.createElement('div');
   actions.className = 'card-actions';
