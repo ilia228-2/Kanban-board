@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -13,6 +13,15 @@ SECRET_KEY = os.getenv(
 
 app = FastAPI(title="Kanban")
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, same_site="lax")
+
+
+@app.middleware("http")
+async def no_cache_for_site(request: Request, call_next):
+    response = await call_next(request)
+    if not request.url.path.startswith("/api"):
+        response.headers["Cache-Control"] = "no-cache"
+    return response
+
 
 app.include_router(auth.router)
 app.include_router(projects.router)

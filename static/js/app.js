@@ -17,10 +17,19 @@ const projectTitle = document.getElementById('project-title');
 const boardTitle = document.getElementById('board-title');
 const boardState = document.getElementById('board-state');
 const board = document.getElementById('board');
+const addCardButton = document.getElementById('add-card');
 const toast = document.getElementById('toast');
 
+const dialog = document.getElementById('card-dialog');
+const cardForm = document.getElementById('card-form');
+const dialogTitle = document.getElementById('dialog-title');
+const cardError = document.getElementById('card-error');
+const cardSave = document.getElementById('card-save');
+
 let projects = [];
+let cards = [];
 let currentId = null;
+let editingId = null;
 let toastTimer = null;
 
 function showToast(message) {
@@ -142,6 +151,7 @@ function selectProject(id) {
 
 function showEmptyBoard() {
   boardTitle.textContent = 'Доска';
+  addCardButton.hidden = true;
   board.replaceChildren();
   boardState.textContent = 'Выберите проект или создайте новый.';
   boardState.hidden = false;
@@ -151,14 +161,15 @@ async function loadCards() {
   const id = currentId;
   const project = projects.find((p) => p.id === id);
   boardTitle.textContent = project ? project.title : 'Доска';
+  addCardButton.hidden = false;
 
   board.replaceChildren();
   boardState.textContent = 'Загрузка карточек...';
   boardState.hidden = false;
 
-  let cards;
+  let loaded;
   try {
-    cards = await api('GET', '/api/projects/' + id + '/cards');
+    loaded = await api('GET', '/api/projects/' + id + '/cards');
   } catch (err) {
     if (id === currentId) {
       boardState.textContent = 'Не удалось загрузить карточки';
@@ -170,14 +181,15 @@ async function loadCards() {
   if (id !== currentId) {
     return;
   }
+  cards = loaded;
   boardState.hidden = true;
-  renderBoard(cards);
+  renderBoard();
 }
 
-function renderBoard(cards) {
+function renderBoard() {
   board.replaceChildren();
 
-  COLUMNS.forEach((column) => {
+  COLUMNS.forEach((column, index) => {
     const columnCards = cards.filter((card) => card.status === column.status);
 
     const box = document.createElement('div');
@@ -206,13 +218,24 @@ function renderBoard(cards) {
       list.append(empty);
     }
 
-    columnCards.forEach((card) => list.append(buildCard(card)));
+    columnCards.forEach((card) => list.append(buildCard(card, index)));
     box.append(list);
     board.append(box);
   });
 }
 
-function buildCard(card) {
+function actionButton(text, title, handler, extraClass) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'icon-btn' + (extraClass ? ' ' + extraClass : '');
+  button.textContent = text;
+  button.title = title;
+  button.setAttribute('aria-label', title);
+  button.addEventListener('click', handler);
+  return button;
+}
+
+function buildCard(card, columnIndex) {
   const item = document.createElement('article');
   item.className = 'card-item';
 
@@ -241,10 +264,111 @@ function buildCard(card) {
     due.textContent = 'до ' + formatDate(card.due_date);
     meta.append(due);
   }
-
   item.append(meta);
+
+  const actions = document.createElement('div');
+  actions.className = 'card-actions';
+
+  if (columnIndex > 0) {
+    actions.append(
+      actionButton('←', 'Переместить влево', () => moveCard(card, columnIndex - 1))
+    );
+  }
+  if (columnIndex < COLUMNS.length - 1) {
+    actions.append(
+      actionButton('→', 'Переместить вправо', () => moveCard(card, columnIndex + 1))
+    );
+  }
+  actions.append(
+    actionButton('✎', 'Изменить', () => openDialog(card), 'push-right'),
+    actionButton('×', 'Удалить', () => deleteCard(card), 'icon-danger')
+  );
+  item.append(actions);
+
   return item;
 }
+
+/* ---------- Карточки ---------- */
+
+async function moveCard(card, columnIndex) {
+  try {
+    await api('PATCH', '/api/cards/' + card.id, { status: COLUMNS[columnIndex].status });
+    await loadCards();
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+async function deleteCard(card) {
+  const ok = confirm('Удалить карточку «' + card.title + '»?');
+  if (!ok) {
+    return;
+  }
+  try {
+    await api('DELETE', '/api/cards/' + card.id);
+    await loadCards();
+  } catch (err) {
+    handleError(err);
+  }
+}
+
+function openDialog(card) {
+  cardError.hidden = true;
+  cardSave.disabled = false;
+
+  if (card) {
+    editingId = card.id;
+    dialogTitle.textContent = 'Изменить карточку';
+    document.getElementById('card-title').value = card.title;
+    document.getElementById('card-description').value = card.description || '';
+    document.getElementById('card-status').value = card.status;
+    document.getElementById('card-priority').value = String(card.priority);
+    document.getElementById('card-due').value = card.due_date || '';
+  } else {
+    editingId = null;
+    dialogTitle.textContent = 'Новая карточка';
+    cardForm.reset();
+  }
+
+  dialog.showModal();
+  document.getElementById('card-title').focus();
+}
+
+cardForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  cardError.hidden = true;
+  cardSave.disabled = true;
+
+  const body = {
+    title: document.getElementById('card-title').value.trim(),
+    description: document.getElementById('card-description').value.trim() || null,
+    status: document.getElementById('card-status').value,
+    priority: Number(document.getElementById('card-priority').value),
+    due_date: document.getElementById('card-due').value || null,
+  };
+
+  try {
+    if (editingId === null) {
+      await api('POST', '/api/projects/' + currentId + '/cards', body);
+    } else {
+      await api('PATCH', '/api/cards/' + editingId, body);
+    }
+    dialog.close();
+    await loadCards();
+  } catch (err) {
+    if (err && err.status === 401) {
+      window.location.href = '/login.html';
+      return;
+    }
+    cardError.textContent = err && err.message ? err.message : 'Не удалось сохранить карточку';
+    cardError.hidden = false;
+  } finally {
+    cardSave.disabled = false;
+  }
+});
+
+document.getElementById('card-cancel').addEventListener('click', () => dialog.close());
+addCardButton.addEventListener('click', () => openDialog(null));
 
 /* ---------- Запуск ---------- */
 

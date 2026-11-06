@@ -41,11 +41,53 @@
     <section class="board-area">
       <div class="board-head">
         <h2 id="board-title">Доска</h2>
+        <button class="btn" id="add-card" type="button" hidden>+ Карточка</button>
       </div>
       <p id="board-state" class="state"></p>
       <div id="board" class="board"></div>
     </section>
   </main>
+
+  <dialog id="card-dialog" class="dialog">
+    <form id="card-form">
+      <h3 id="dialog-title">Новая карточка</h3>
+
+      <label for="card-title">Название</label>
+      <input id="card-title" type="text" maxlength="200" required>
+
+      <label for="card-description">Описание</label>
+      <textarea id="card-description" rows="3"></textarea>
+
+      <div class="form-row">
+        <div>
+          <label for="card-status">Колонка</label>
+          <select id="card-status">
+            <option value="todo">К работе</option>
+            <option value="in_progress">В процессе</option>
+            <option value="done">Готово</option>
+          </select>
+        </div>
+        <div>
+          <label for="card-priority">Приоритет</label>
+          <select id="card-priority">
+            <option value="1">Низкий</option>
+            <option value="2" selected>Средний</option>
+            <option value="3">Высокий</option>
+          </select>
+        </div>
+      </div>
+
+      <label for="card-due">Срок</label>
+      <input id="card-due" type="date">
+
+      <p id="card-error" class="error" hidden></p>
+
+      <div class="dialog-actions">
+        <button class="btn btn-light" id="card-cancel" type="button">Отмена</button>
+        <button class="btn" id="card-save" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
 
   <div id="toast" class="toast" hidden></div>
 
