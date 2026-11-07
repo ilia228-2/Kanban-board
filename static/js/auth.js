@@ -18,7 +18,7 @@ form.addEventListener('submit', async (event) => {
 
   try {
     await api('POST', '/api/auth/' + mode, body);
-    window.location.href = '/index.html';
+    window.location.href = '/app.html';
   } catch (err) {
     errorBox.textContent = err.message;
     errorBox.hidden = false;
